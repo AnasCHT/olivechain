@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OliveChain — Trust Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-deep:#1c2a21; --green-mid:#2c4032; --leaf:#7d9270;
+    --gold:#c2a24b; --gold-soft:#d9c690;
+    --paper:#f2efe6; --paper-2:#e9e4d5; --ink:#182019; --ink-soft:#4d5a4e;
+    --ok:#5d8a5e; --warn:#b2703a; --line:#ddd6c2;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto} *{animation:none!important;transition:none!important}}
+  body{font-family:'Public Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.55}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  a{color:inherit}
+
+  /* ---------- header / nav ---------- */
+  header{background:var(--green-deep);color:var(--paper);position:sticky;top:0;z-index:20;
+    box-shadow:0 2px 14px rgba(24,32,25,.25)}
+  .nav{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:26px;padding:14px 24px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px;text-decoration:none}
+  .brand b{font-family:'Fraunces',serif;font-size:22px;font-weight:700}
+  .brand span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  nav a{text-decoration:none;font-size:13.5px;font-weight:500;color:var(--paper-2);
+    padding:7px 13px;border-radius:3px;transition:background .15s,color .15s}
+  nav a:hover{background:rgba(242,239,230,.1);color:#fff}
+  .seal{display:inline-flex;align-items:center;gap:7px;background:rgba(194,162,75,.15);border:1px solid var(--gold);
+    color:var(--gold-soft);padding:6px 12px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap}
+  .seal.bad{border-color:var(--warn);color:#e8b98d;background:rgba(178,112,58,.18)}
+
+  /* ---------- hero ---------- */
+  .hero{background:var(--green-deep);color:var(--paper);padding:44px 24px 64px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-110px;top:-110px;width:320px;height:320px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, var(--gold-soft), var(--gold) 70%);opacity:.85}
+  .hero .wrap{max-width:1180px;margin:0 auto;position:relative;z-index:1}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .hero h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(30px,4.5vw,44px);margin:8px 0 4px;line-height:1.08}
+  .hero p{color:var(--paper-2);max-width:62ch;font-size:15px}
+
+  /* ---------- stat cards ---------- */
+  .stats{max-width:1180px;margin:-38px auto 0;padding:0 24px;position:relative;z-index:2;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px}
+  .stat{background:#fff;border:1px solid var(--line);padding:18px 18px 15px;border-radius:3px;
+    box-shadow:0 3px 12px rgba(24,32,25,.06)}
+  .stat .v{font-family:'Fraunces',serif;font-size:29px;font-weight:700;line-height:1.1}
+  .stat .v.ok{color:var(--ok)} .stat .v.warn{color:var(--warn)} .stat .v.gold{color:var(--gold)}
+  .stat .l{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-top:4px}
+
+  main{max-width:1180px;margin:0 auto;padding:0 24px 90px}
+  section{margin-top:70px;scroll-margin-top:84px}
+  h2{font-family:'Fraunces',serif;font-size:25px;font-weight:600;margin-bottom:5px}
+  .lede{color:var(--ink-soft);font-size:14.5px;max-width:64ch;margin-bottom:24px}
+
+
+  /* ---------- process roadmap ---------- */
+  .roadmap{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;position:relative}
+  .roadmap-step{background:#fff;border:1px solid var(--line);border-radius:4px;padding:17px;position:relative;min-height:170px}
+  .roadmap-step:not(:last-child)::after{content:"→";position:absolute;right:-11px;top:50%;transform:translateY(-50%);z-index:2;color:var(--gold);font-size:19px;font-weight:700}
+  .roadmap-number{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:var(--green-mid);color:var(--paper);font-family:'Fraunces',serif;font-weight:700;margin-bottom:11px}
+  .roadmap-step h3{font-family:'Fraunces',serif;font-size:16px;margin-bottom:7px}
+  .roadmap-step p{font-size:12px;color:var(--ink-soft)}
+  .roadmap-actor{display:inline-block;margin-top:11px;padding:3px 8px;border:1px solid var(--gold-soft);background:#fbf7e9;color:#79621d;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+  .roadmap-split{display:grid;gap:6px;margin-top:9px}.roadmap-split span{display:block;border-left:3px solid var(--leaf);padding-left:7px;font-size:11px;color:var(--ink-soft)}
+  .roadmap-note{margin-top:15px;padding:13px 15px;background:var(--paper-2);border-left:4px solid var(--gold);font-size:12.5px;color:var(--ink-soft)}
+  @media(max-width:1050px){.roadmap{grid-template-columns:repeat(3,1fr)}.roadmap-step:nth-child(3)::after{display:none}}
+  @media(max-width:650px){.roadmap{grid-template-columns:1fr}.roadmap-step::after{display:none!important}.roadmap-step{min-height:auto}}
+
+  /* ---------- batch cards ---------- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .bcard{background:#fff;border:1px solid var(--line);border-radius:3px;padding:22px;display:flex;
+    flex-direction:column;gap:10px;transition:box-shadow .15s, transform .15s}
+  .bcard:hover{box-shadow:0 6px 18px rgba(24,32,25,.1);transform:translateY(-2px)}
+  .bcard .bid{font-size:15px;font-weight:600;font-family:'Fraunces',serif}
+  .bcard .meta{font-size:12.5px;color:var(--ink-soft)}
+  .chiprow{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:var(--paper-2);border:1px solid var(--line);font-size:11.5px;padding:3px 9px;border-radius:2px}
+  .bcard a.go{margin-top:auto;align-self:flex-start;text-decoration:none;font-size:13px;font-weight:600;
+    color:var(--green-mid);border:1px solid var(--green-mid);padding:7px 14px;border-radius:2px;
+    transition:background .15s,color .15s}
+  .bcard a.go:hover{background:var(--green-mid);color:var(--paper)}
+
+  /* ---------- circular ---------- */
+  .rescard{background:#fff;border:1px solid var(--line);border-radius:3px;padding:22px;margin-bottom:14px}
+  .resline{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .resline b{font-family:'Fraunces',serif;font-size:16.5px}
+  .resline .st{font-size:13px;font-weight:600}
+  .st.ok{color:var(--ok)} .st.pending{color:var(--warn)}
+  .bar{height:10px;background:var(--paper-2);border-radius:6px;margin:14px 0 6px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--leaf),var(--gold));
+    transition:width .6s ease}
+  .barlab{font-size:12px;color:var(--ink-soft)}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .flow .step{background:var(--paper-2);border:1px solid var(--line);font-size:12px;padding:5px 11px;border-radius:2px}
+  .flow .step b{font-weight:600}
+  .issues{margin-top:10px;font-size:12.5px;color:var(--warn)}
+  .outs{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .outs span{border:1px solid var(--gold);color:#8a7325;font-size:12px;padding:4px 10px;border-radius:2px}
+
+  /* ---------- rewards ---------- */
+  .lb{background:#fff;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .lbrow{display:grid;grid-template-columns:44px 1fr 220px 70px;align-items:center;gap:14px;
+    padding:13px 18px;border-bottom:1px solid var(--line);font-size:14px}
+  .lbrow:last-child{border-bottom:none}
+  .lbrow .rank{font-family:'Fraunces',serif;font-weight:700;color:var(--ink-soft);font-size:16px}
+  .lbrow .who b{font-weight:600}
+  .lbrow .who span{display:block;font-size:11.5px;color:var(--ink-soft)}
+  .lbbar{height:8px;background:var(--paper-2);border-radius:5px;overflow:hidden}
+  .lbbar i{display:block;height:100%;background:var(--gold);border-radius:5px}
+  .lbrow .pts{font-family:'Fraunces',serif;font-weight:700;color:var(--gold);font-size:17px;text-align:right}
+  @media(max-width:640px){.lbrow{grid-template-columns:30px 1fr 60px}.lbbar{display:none}}
+
+  /* ---------- ledger table ---------- */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  select,input[type=text]{font-family:'Public Sans',sans-serif;font-size:13.5px;padding:8px 12px;
+    border:1px solid var(--line);border-radius:2px;background:#fff;color:var(--ink)}
+  input[type=text]{flex:1;min-width:180px}
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:3px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+  th{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+    text-align:left;padding:11px 14px;border-bottom:2px solid var(--line);white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid #eee8d8;vertical-align:top}
+  tbody tr.evrow{cursor:pointer;transition:background .12s}
+  tbody tr.evrow:hover{background:#faf8f0}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:2px;white-space:nowrap}
+  .badge.l1{background:#e4ead9;color:#42563b}
+  .badge.l2{background:#f0e6c8;color:#7c6520}
+  .badge.gov{background:#e6e3da;color:#57534a}
+  .hash{font-size:11px;color:var(--ink-soft)}
+  .sup{font-size:10.5px;color:var(--warn);font-weight:600}
+  tr.detail td{background:#fbfaf4;padding:14px 18px}
+  pre.payload{font-family:'IBM Plex Mono',monospace;font-size:11.5px;white-space:pre-wrap;word-break:break-word;
+    color:var(--ink);max-height:300px;overflow:auto}
+  .loadmore{margin-top:14px;text-align:center}
+  .loadmore button, .rerun{font-family:'Public Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;
+    background:var(--green-mid);color:var(--paper);border:none;padding:9px 22px;border-radius:2px;
+    transition:background .15s}
+  .loadmore button:hover,.rerun:hover{background:var(--green-deep)}
+  .count{font-size:12.5px;color:var(--ink-soft);align-self:center}
+
+  /* ---------- network ---------- */
+  .orgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .org{background:#fff;border:1px solid var(--line);border-radius:3px;padding:18px}
+  .org b{font-family:'Fraunces',serif;font-size:15.5px}
+  .org .oid{font-size:11px;color:var(--ink-soft);margin:2px 0 10px}
+
+  /* ---------- audit ---------- */
+  .audit{background:#fff;border:1px solid var(--line);border-radius:3px;padding:24px}
+  .audithead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bigseal{display:inline-flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-size:19px;font-weight:600}
+  .bigseal.ok{color:var(--ok)} .bigseal.bad{color:var(--warn)}
+  .audit .mono{font-size:11.5px;color:var(--ink-soft);word-break:break-all;margin-top:10px;display:block}
+  .anom{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;font-size:13.5px}
+  .anom .a{padding:8px 0;border-bottom:1px dashed var(--line)}
+  .anom .a:last-child{border-bottom:none}
+  .anom .rule{font-weight:600;color:var(--warn)}
+  .empty{color:var(--ink-soft);font-size:13.5px}
+
+  footer{background:var(--green-mid);color:var(--paper-2);padding:30px 24px;font-size:12.5px;margin-top:80px}
+  footer .fwrap{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  footer a{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="brand" href="#"><b>OliveChain</b><span>Trust Dashboard</span></a>
+    <nav>
+      <a href="#process-map">Process</a>
+      <a href="#batches">Batches</a>
+      <a href="#circular">Circular</a>
+      <a href="#rewards">Rewards</a>
+      <a href="#ledger">Ledger</a>
+      <a href="#network">Network</a>
+      <a href="#audit">Audit</a>
+      <a href="/verify">Consumer app</a>
+      <a href="/m">Mobile</a>
+      <a href="/portal">Actor portal</a>
+      <a href="/docs" target="_blank" rel="noopener">API ↗</a>
+    </nav>
+    <span class="seal" id="headSeal">…</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Verifiable circular trust system</div>
+    <h1>From the grove, and back to it.</h1>
+    <p>Every record below was written by an authenticated organization, digitally signed, and chained to
+       the record before it. Corrections supersede — they never erase. This dashboard reads the live ledger.</p>
+  </div>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<main>
+
+  <section id="process-map">
+    <h2>Traceability process — ordered steps</h2>
+    <p class="lede">A permanent reminder of the complete product and circular-recovery sequence. Every actor records only the stage assigned to its organization.</p>
+    <div class="roadmap">
+      <article class="roadmap-step"><div class="roadmap-number">1</div><h3>Farming process</h3><p>Record weather, humidity, air pollution, plantation practices and chemical treatments.</p><span class="roadmap-actor">Farmer</span></article>
+      <article class="roadmap-step"><div class="roadmap-number">2</div><h3>Harvesting</h3><p>Record harvest period, olive weight and harvesting method.</p><span class="roadmap-actor">Farmer</span></article>
+      <article class="roadmap-step"><div class="roadmap-number">3</div><h3>Transport olives</h3><p>Transfer olives to the maker with temperature and before/after weight measurements.</p><span class="roadmap-actor">Courier</span></article>
+      <article class="roadmap-step"><div class="roadmap-number">4</div><h3>Transform and separate</h3><div class="roadmap-split"><span>Transform olives into oil and record yield and temperature.</span><span>Gather and identify the generated leftovers.</span></div><span class="roadmap-actor">Maker</span></article>
+      <article class="roadmap-step"><div class="roadmap-number">5</div><h3>Package and dispatch</h3><div class="roadmap-split"><span>Package the oil and record packaging conditions.</span><span>Send leftovers to the recycling system.</span></div><span class="roadmap-actor">Maker + Courier</span></article>
+      <article class="roadmap-step"><div class="roadmap-number">6</div><h3>Sell and recover</h3><div class="roadmap-split"><span>Deliver oil packages to the seller.</span><span>Transform leftovers into energy and calculate rewards.</span></div><span class="roadmap-actor">Courier + Recycler</span></article>
+    </div>
+    <div class="roadmap-note">The final product passport combines the information from every step, while the seller catalogue lists products that are ready for sale.</div>
+  </section>
+
+  <section id="batches">
+    <h2>Batch passports</h2>
+    <p class="lede">Each batch of oil carries a consumer passport: its journey from cultivation to shelf,
+       the fate of its by-products, and the recognition earned along the way.</p>
+    <div class="cards" id="batchCards"><span class="empty">Loading…</span></div>
+  </section>
+
+  <section id="circular">
+    <h2>Circular recovery</h2>
+    <p class="lede">Residue lots are tracked by mass balance: quantities created, transported, accepted and
+       transformed must reconcile before any reward is issued — verified, not promised.</p>
+    <div id="resList"><span class="empty">Loading…</span></div>
+  </section>
+
+  <section id="rewards">
+    <h2>EcoPoints leaderboard</h2>
+    <p class="lede">Non-transferable credits, issued by the consortium authority only for actions the
+       system could independently verify.</p>
+    <div class="lb" id="leaderboard"><div class="lbrow"><span class="empty">Loading…</span></div></div>
+  </section>
+
+  <section id="ledger">
+    <h2>Ledger explorer</h2>
+    <p class="lede">The append-only event chain, newest first. Click a row to inspect its signed payload.</p>
+    <div class="toolbar">
+      <select id="fType"><option value="">All event types</option></select>
+      <input type="text" id="fSubject" placeholder="Filter by batch, residue or organization…">
+      <span class="count" id="evCount"></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>When</th><th>Event</th><th>Subject</th><th>Actor</th><th>Hash</th></tr></thead>
+        <tbody id="evBody"></tbody>
+      </table>
+    </div>
+    <div class="loadmore"><button id="moreBtn" hidden>Load more</button></div>
+  </section>
+
+  <section id="network">
+    <h2>The consortium</h2>
+    <p class="lede">Authenticated organizations and the roles that bound what each may write to the ledger.</p>
+    <div class="orgs" id="orgGrid"><span class="empty">Loading…</span></div>
+  </section>
+
+  <section id="audit">
+    <h2>Live audit</h2>
+    <p class="lede">Re-verifies the entire hash chain and every signature against registered public keys,
+       then scans for implausible yields, duplicates and conflicting custody.</p>
+    <div class="audit">
+      <div class="audithead">
+        <span class="bigseal" id="auditSeal">Running…</span>
+        <button class="rerun" id="rerunBtn">Re-run audit</button>
+      </div>
+      <span class="mono" id="auditHash"></span>
+      <div class="anom" id="anomList"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="fwrap">
+    <p>OliveChain — verifiable circular trust for olive oil. Physical truth still requires scales,
+       laboratories and governance; this ledger makes later alteration detectable.</p>
+    <p><a href="/docs">API documentation</a></p>
+  </div>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const api = p => fetch(p).then(r => { if(!r.ok) throw new Error(p+" -> "+r.status); return r.json(); });
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => typeof n === "number" ? n.toLocaleString("en-US") : n;
+const when = ts => new Date(ts*1000).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+const LOOP1 = ["cultivation","harvest","collection_transport","milling","lab_verification","bottling","distribution_retail","consumer_verification"];
+const LOOP2 = ["residue_generation","residue_custody","valorization","useful_output","return_or_sale","env_accounting"];
+const NICE = t => t.replace(/_/g," ").replace(/\b\w/g, c=>c.toUpperCase());
+const badgeClass = t => LOOP1.includes(t) ? "l1" : LOOP2.includes(t) ? "l2" : "gov";
+
+/* ---------------- stats + header seal ---------------- */
+async function loadStats(){
+  const s = await api("/stats");
+  const seal = $("headSeal");
+  seal.textContent = s.chain_valid ? "✓ Chain verified" : "✕ Chain invalid";
+  seal.classList.toggle("bad", !s.chain_valid);
+  $("stats").innerHTML = `
+    <div class="stat"><div class="v">${fmt(s.height)}</div><div class="l">Ledger events</div></div>
+    <div class="stat"><div class="v ${s.chain_valid?'ok':'warn'}">${s.chain_valid?'Valid':'Invalid'}</div><div class="l">Chain audit</div></div>
+    <div class="stat"><div class="v">${fmt(s.organizations)}</div><div class="l">Organizations</div></div>
+    <div class="stat"><div class="v gold">${fmt(s.eco_points_issued)}</div><div class="l">EcoPoints issued</div></div>
+    <div class="stat"><div class="v">${fmt(s.consumer_scans)}</div><div class="l">Consumer scans</div></div>
+    <div class="stat"><div class="v ${s.open_flags?'warn':'ok'}">${fmt(s.open_flags)}</div><div class="l">Open review flags</div></div>`;
+}
+
+/* ---------------- batches ---------------- */
+async function loadBatches(){
+  const {batches} = await api("/subjects");
+  const holder = $("batchCards");
+  if(!batches.length){ holder.innerHTML = '<span class="empty">No batches recorded yet.</span>'; return; }
+  holder.innerHTML = "";
+  for(const b of batches){
+    const card = document.createElement("div");
+    card.className = "bcard";
+    card.innerHTML = `<div class="bid mono">${esc(b)}</div><div class="meta">Loading passport…</div>`;
+    holder.appendChild(card);
+    api("/passport/"+encodeURIComponent(b)).then(p=>{
+      const stages = p.stages.map(s=>`<span class="chip">${esc(s.stage)}</span>`).join("");
+      card.innerHTML = `
+        <div class="bid mono">${esc(b)}</div>
+        <div class="meta">${p.stages.length} signed stages · ${p.circular.length} residue lots ·
+          ${p.consumer_scans} scans · ledger ${p.ledger_verified?'✓ verified':'✕ FAILED'}</div>
+        <div class="chiprow">${stages}</div>
+        <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap">
+          <a class="go" style="margin-top:0" href="/passport-view/${encodeURIComponent(b)}">View passport →</a>
+          <a class="go" style="margin-top:0" href="/passport/${encodeURIComponent(b)}.pdf" target="_blank" rel="noopener">Signed PDF</a>
+          <a class="go" style="margin-top:0" href="/labels/${encodeURIComponent(b)}">Print labels</a>
+        </div>`;
+    }).catch(()=>{ card.querySelector(".meta").textContent = "Passport unavailable."; });
+  }
+}
+
+/* ---------------- circular ---------------- */
+async function loadCircular(){
+  const {residues} = await api("/subjects");
+  const holder = $("resList");
+  if(!residues.length){ holder.innerHTML = '<span class="empty">No residue lots recorded yet.</span>'; return; }
+  holder.innerHTML = "";
+  const OUT_LABELS = {compost_kg:"kg compost", polyphenols_g:"g polyphenols", bioenergy_kwh:"kWh bioenergy",
+    biochar_kg:"kg biochar", fertilizer_kg:"kg fertilizer", feedstock_kg:"kg feedstock", adsorbent_kg:"kg adsorbent"};
+  for(const rid of residues){
+    const r = await api("/residues/"+encodeURIComponent(rid)+"/balance");
+    const generatedKg = Number(r.generated_kg ?? 0);
+    const transformedKg = Number(r.transformed_kg ?? 0);
+    const apiPct = Number(r.recovery_pct);
+    const rawPct = Number.isFinite(apiPct)
+      ? apiPct
+      : (generatedKg > 0 ? (100 * transformedKg / generatedKg) : 0);
+    const pct = Math.max(0, Math.min(100, rawPct));
+    const outs = Object.entries(r.outputs||{}).map(([k,v])=>`<span>${fmt(v)} ${OUT_LABELS[k]||k}</span>`).join("");
+    holder.insertAdjacentHTML("beforeend", `
+      <div class="rescard">
+        <div class="resline">
+          <b class="mono">${esc(rid)}</b>
+          <span class="st ${r.balanced?'ok':'pending'}">${r.balanced?'✓ mass balance verified':'⏳ recovery in progress'}</span>
+        </div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="barlab">${fmt(rawPct)}% of generated mass verifiably recovered</div>
+        <div class="flow">
+          <span class="step"><b>${fmt(r.generated_kg)}</b> kg generated</span>
+          <span class="step"><b>${fmt(r.transferred_kg)}</b> kg transferred</span>
+          <span class="step"><b>${fmt(r.accepted_kg)}</b> kg accepted</span>
+          <span class="step"><b>${fmt(r.transformed_kg)}</b> kg transformed</span>
+          <span class="step"><b>${fmt(r.rejected_kg)}</b> kg rejected</span>
+        </div>
+        ${outs ? `<div class="outs">${outs}</div>` : ""}
+        ${r.issues.length ? `<div class="issues">⚠ ${r.issues.map(esc).join(" · ")}</div>` : ""}
+      </div>`);
+  }
+}
+
+/* ---------------- rewards ---------------- */
+async function loadRewards(){
+  const rows = await api("/rewards/balances");
+  const lb = $("leaderboard");
+  if(!rows.length){ lb.innerHTML = '<div class="lbrow"><span class="empty">No rewards issued yet.</span></div>'; return; }
+  const max = Math.max(...rows.map(r=>r.points));
+  lb.innerHTML = rows.map((r,i)=>`
+    <div class="lbrow">
+      <span class="rank">${i+1}</span>
+      <span class="who"><b>${esc(r.name)}</b><span class="mono">${esc(r.org_id)}</span></span>
+      <span class="lbbar"><i style="width:${Math.round(100*r.points/max)}%"></i></span>
+      <span class="pts">${fmt(r.points)}</span>
+    </div>`).join("");
+}
+
+/* ---------------- ledger explorer ---------------- */
+const PAGE = 25;
+let evOffset = 0, evTotal = 0;
+function evQuery(){
+  const t = $("fType").value, s = $("fSubject").value.trim();
+  const q = new URLSearchParams({limit:PAGE, offset:evOffset});
+  if(t) q.set("event_type", t);
+  if(s) q.set("subject", s);
+  return "/events?"+q.toString();
+}
+async function loadEvents(reset){
+  if(reset){ evOffset = 0; $("evBody").innerHTML = ""; }
+  const data = await api(evQuery());
+  evTotal = data.total;
+  const body = $("evBody");
+  for(const e of data.events){
+    const tr = document.createElement("tr");
+    tr.className = "evrow";
+    tr.innerHTML = `
+      <td style="white-space:nowrap">${when(e.timestamp)}</td>
+      <td><span class="badge ${badgeClass(e.event_type)}">${NICE(e.event_type)}</span>
+          ${e.superseded_by?'<div class="sup">superseded</div>':''}</td>
+      <td class="mono" style="font-size:12px">${esc(e.subject_id)}</td>
+      <td>${esc(e.actor_name)}${e.actor_user?`<div class="hash mono">${esc(e.actor_user)}</div>`:""}</td>
+      <td class="hash mono">${e.event_hash.slice(0,12)}…</td>`;
+    const dt = document.createElement("tr");
+    dt.className = "detail"; dt.hidden = true;
+    const td = document.createElement("td"); td.colSpan = 5;
+    const pre = document.createElement("pre"); pre.className = "payload";
+    pre.textContent = JSON.stringify({payload:e.payload, evidence:e.evidence,
+      event_id:e.event_id, event_hash:e.event_hash, superseded_by:e.superseded_by}, null, 2);
+    td.appendChild(pre); dt.appendChild(td);
+    tr.addEventListener("click", ()=>{ dt.hidden = !dt.hidden; });
+    body.appendChild(tr); body.appendChild(dt);
+  }
+  evOffset += data.events.length;
+  $("evCount").textContent = `${evOffset} of ${evTotal} events`;
+  $("moreBtn").hidden = evOffset >= evTotal;
+}
+function initLedgerControls(){
+  const sel = $("fType");
+  for(const t of [...LOOP1, ...LOOP2, "correction","reward_issued","review_flag","review_resolution"]){
+    const o = document.createElement("option"); o.value = t; o.textContent = NICE(t); sel.appendChild(o);
+  }
+  sel.addEventListener("change", ()=>loadEvents(true));
+  let deb;
+  $("fSubject").addEventListener("input", ()=>{ clearTimeout(deb); deb = setTimeout(()=>loadEvents(true), 300); });
+  $("moreBtn").addEventListener("click", ()=>loadEvents(false));
+}
+
+/* ---------------- network ---------------- */
+async function loadOrgs(){
+  const orgs = await api("/organizations");
+  $("orgGrid").innerHTML = orgs.map(o=>`
+    <div class="org"><b>${esc(o.name)}</b><div class="oid mono">${esc(o.org_id)}</div>
+      <div class="chiprow">${o.roles.map(r=>`<span class="chip">${esc(r)}</span>`).join("")}</div></div>`).join("");
+}
+
+/* ---------------- audit ---------------- */
+async function loadAudit(){
+  const seal = $("auditSeal");
+  seal.textContent = "Running…"; seal.className = "bigseal";
+  const [a, h] = await Promise.all([api("/audit"), api("/head")]);
+  seal.textContent = a.chain_valid ? "✓ Every hash and signature verifies" : "✕ Verification failed";
+  seal.classList.add(a.chain_valid ? "ok" : "bad");
+  $("auditHash").textContent = "head " + h.head_hash + " · height " + h.height;
+  const list = $("anomList");
+  const parts = [];
+  if(a.problems.length)
+    parts.push(a.problems.map(p=>`<div class="a"><span class="rule">chain</span> ${esc(p)}</div>`).join(""));
+  if(a.anomalies.length)
+    parts.push(a.anomalies.map(f=>`<div class="a"><span class="rule">${esc(f.rule)}</span> ${esc(f.detail)}
+      <div class="hash mono">event ${esc(f.subject_event)}</div></div>`).join(""));
+  list.innerHTML = parts.length ? parts.join("")
+    : '<span class="empty">No open anomalies — implausible yields, duplicates and conflicting custody all clear.</span>';
+}
+
+/* ---------------- boot ---------------- */
+initLedgerControls();
+loadStats().catch(console.error);
+loadBatches().catch(console.error);
+loadCircular().catch(console.error);
+loadRewards().catch(console.error);
+loadEvents(true).catch(console.error);
+loadOrgs().catch(console.error);
+loadAudit().catch(console.error);
+$("rerunBtn").addEventListener("click", ()=>{ loadAudit(); loadStats(); });
+</script>
+</body>
+</html>

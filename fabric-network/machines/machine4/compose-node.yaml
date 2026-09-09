@@ -1,0 +1,77 @@
+name: olivechain-machine4
+
+services:
+  couchdb:
+    image: couchdb:${COUCHDB_VERSION}
+    container_name: couchdb.recycler.olivechain.local
+    hostname: couchdb.recycler.olivechain.local
+    restart: unless-stopped
+    environment:
+      COUCHDB_USER: ${COUCHDB_USER}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD}
+    volumes:
+      - ../../runtime/machine4/production/couchdb:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5984/_up"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - olivechain
+
+  peer:
+    image: hyperledger/fabric-peer:${FABRIC_VERSION}
+    container_name: peer0.recycler.olivechain.local
+    hostname: peer0.recycler.olivechain.local
+    restart: unless-stopped
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    environment:
+      FABRIC_LOGGING_SPEC: INFO
+      CORE_PEER_ID: peer0.recycler.olivechain.local
+      CORE_PEER_ADDRESS: peer0.recycler.olivechain.local:7051
+      CORE_PEER_LISTENADDRESS: 0.0.0.0:7051
+      CORE_PEER_CHAINCODEADDRESS: peer0.recycler.olivechain.local:7052
+      CORE_PEER_CHAINCODELISTENADDRESS: 0.0.0.0:7052
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.recycler.olivechain.local:7051
+      # One peer per organization: this peer receives blocks directly from the ordering service.
+      CORE_PEER_GOSSIP_USELEADERELECTION: "false"
+      CORE_PEER_GOSSIP_ORGLEADER: "true"
+      CORE_PEER_GOSSIP_STATE_ENABLED: "false"
+      CORE_PEER_DELIVERYCLIENT_BLOCKGOSSIPENABLED: "false"
+      CORE_PEER_LOCALMSPID: RecyclerOrgMSP
+      CORE_PEER_MSPCONFIGPATH: /etc/hyperledger/fabric/msp
+      CORE_PEER_TLS_ENABLED: "true"
+      CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+      CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+      CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+      CORE_LEDGER_STATE_STATEDATABASE: CouchDB
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb:5984
+      CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME: ${COUCHDB_USER}
+      CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD: ${COUCHDB_PASSWORD}
+      CORE_OPERATIONS_LISTENADDRESS: 0.0.0.0:9443
+      CORE_METRICS_PROVIDER: prometheus
+      CORE_PEER_PROFILE_ENABLED: "false"
+    ports:
+      - "7051:7051"
+      - "127.0.0.1:9443:9443"
+    volumes:
+      - ../../runtime/machine4/crypto/peerOrganizations/recycler.olivechain.local/peers/peer0.recycler.olivechain.local/msp:/etc/hyperledger/fabric/msp:ro
+      - ../../runtime/machine4/crypto/peerOrganizations/recycler.olivechain.local/peers/peer0.recycler.olivechain.local/tls:/etc/hyperledger/fabric/tls:ro
+      - ../../runtime/machine4/production/peer:/var/hyperledger/production
+    extra_hosts:
+      - "peer0.farmer.olivechain.local:${M1_IP}"
+      - "orderer1.ordererorg1.olivechain.local:${M1_IP}"
+      - "peer0.maker.olivechain.local:${M2_IP}"
+      - "orderer2.ordererorg2.olivechain.local:${M2_IP}"
+      - "peer0.courier.olivechain.local:${M3_IP}"
+      - "orderer3.ordererorg3.olivechain.local:${M3_IP}"
+    networks:
+      olivechain:
+        aliases:
+          - peer0.recycler.olivechain.local
+
+networks:
+  olivechain:
+    name: olivechain-machine4

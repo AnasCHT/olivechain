@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1c2a21">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>OliveChain</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/i18n.js"></script>
+<style>
+  :root{
+    --green-deep:#1c2a21; --green-mid:#2c4032; --leaf:#7d9270;
+    --gold:#c2a24b; --gold-soft:#d9c690;
+    --paper:#f2efe6; --paper-2:#e9e4d5; --ink:#182019; --ink-soft:#4d5a4e;
+    --ok:#5d8a5e; --warn:#b2703a; --line:#ddd6c2;
+    --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:'Public Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;
+    max-width:520px;margin:0 auto;box-shadow:0 0 40px rgba(24,32,25,.12)}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  button{font-family:inherit}
+
+  /* ---------- app bar ---------- */
+  .bar{position:sticky;top:0;z-index:30;background:var(--green-deep);color:var(--paper);
+    padding:calc(10px + var(--sat)) 16px 10px;display:flex;align-items:center;gap:10px;min-height:54px}
+  .bar .backbtn{background:none;border:none;color:var(--gold-soft);font-size:22px;line-height:1;
+    padding:8px 10px 8px 0;cursor:pointer;display:none}
+  .bar.haspass .backbtn{display:block}
+  .bar b{font-family:'Fraunces',serif;font-size:19px;font-weight:700}
+  .bar .tag{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-top:2px}
+  .dot{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--paper-2)}
+  .dot i{width:9px;height:9px;border-radius:50%;background:#777;display:inline-block}
+  .dot i.ok{background:#79c07a;box-shadow:0 0 6px #79c07a}
+  .dot i.bad{background:#e08b4e}
+
+  main{padding-bottom:calc(30px + var(--sab))}
+  .screen{display:none;animation:fade .22s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.screen{animation:none}}
+
+  /* ---------- home ---------- */
+  .hero{background:var(--green-deep);color:var(--paper);padding:26px 20px 62px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, var(--gold-soft), var(--gold) 70%);opacity:.9}
+  .hero h1{font-family:'Fraunces',serif;font-size:27px;font-weight:700;line-height:1.15;max-width:19ch;position:relative;z-index:1}
+  .hero p{color:var(--paper-2);font-size:13.5px;margin-top:8px;max-width:34ch;position:relative;z-index:1}
+
+  .panel{margin:-34px 16px 0;position:relative;z-index:2;background:#fff;border:1px solid var(--line);
+    border-radius:8px;padding:18px;box-shadow:0 4px 16px rgba(24,32,25,.09)}
+  .scanbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+    background:var(--gold);color:var(--green-deep);border:none;border-radius:6px;
+    font-size:16px;font-weight:600;padding:16px;cursor:pointer;transition:background .15s}
+  .scanbtn:active{background:var(--gold-soft)}
+  .or{display:flex;align-items:center;gap:12px;color:var(--ink-soft);font-size:11.5px;
+    letter-spacing:.14em;text-transform:uppercase;margin:16px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .coderow{display:flex;gap:8px}
+  .coderow input{flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:13px 14px;
+    border:1.5px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);outline:none}
+  .coderow input:focus{border-color:var(--gold)}
+  .coderow button{background:var(--green-mid);color:var(--paper);border:none;border-radius:6px;
+    font-size:14px;font-weight:600;padding:0 18px;cursor:pointer}
+  .coderow button:disabled{opacity:.6}
+  .homeerr{color:var(--warn);font-size:12.5px;margin-top:10px;min-height:16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chips button{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--green-mid);
+    background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:7px 13px;cursor:pointer}
+  .chips button:active{background:var(--paper-2)}
+  .chipslab{font-size:12px;color:var(--ink-soft);margin-top:14px}
+
+  .hsec{padding:24px 16px 0}
+  .hsec h2{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin-bottom:10px}
+  .hist{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .hrow{display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #eee8d8;
+    cursor:pointer;font-size:13.5px}
+  .hrow:last-child{border-bottom:none}
+  .hrow:active{background:#faf8f0}
+  .hrow .st{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    flex:none;font-size:13px;color:#fff}
+  .hrow .st.ok{background:var(--ok)} .hrow .st.bad{background:var(--warn)}
+  .hrow .hid{font-weight:600}
+  .hrow .ht{font-size:11px;color:var(--ink-soft)}
+  .hrow .go{margin-left:auto;color:var(--ink-soft)}
+  .histempty{padding:16px;font-size:13px;color:var(--ink-soft)}
+
+  .about{margin:24px 16px 0;background:var(--green-deep);color:var(--paper-2);border-radius:8px;padding:20px}
+  .about h3{font-family:'Fraunces',serif;color:var(--gold-soft);font-size:16px;margin-bottom:8px}
+  .about p{font-size:12.5px;margin-bottom:8px}
+  .about p:last-child{margin-bottom:0}
+
+  /* ---------- scanner overlay ---------- */
+  .scanov{position:fixed;inset:0;z-index:60;background:#0b120d;display:none;flex-direction:column}
+  .scanov.active{display:flex}
+  .scanov video{flex:1;object-fit:cover;width:100%}
+  .scanov .frame{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .scanov .frame i{width:min(66vw,300px);aspect-ratio:1;border:3px solid var(--gold);border-radius:14px;
+    box-shadow:0 0 0 100vmax rgba(11,18,13,.55)}
+  .scanov .top{position:absolute;top:0;left:0;right:0;padding:calc(14px + var(--sat)) 16px 12px;
+    display:flex;justify-content:space-between;align-items:center;color:var(--paper);z-index:2}
+  .scanov .top b{font-family:'Fraunces',serif}
+  .scanov .close{background:rgba(242,239,230,.15);border:none;color:var(--paper);font-size:18px;
+    width:38px;height:38px;border-radius:50%;cursor:pointer}
+  .scanov .hint{position:absolute;bottom:calc(26px + var(--sab));left:0;right:0;text-align:center;
+    color:var(--paper-2);font-size:13px;z-index:2}
+
+  /* ---------- passport screen ---------- */
+  .phead{background:var(--green-deep);color:var(--paper);padding:20px 16px 24px}
+  .phead .pid{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.06em;
+    border:1px solid rgba(242,239,230,.35);display:inline-block;padding:5px 11px}
+  .seals{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .seal{display:inline-flex;align-items:center;gap:7px;background:rgba(194,162,75,.15);border:1px solid var(--gold);
+    color:var(--gold-soft);padding:6px 11px;font-size:11.5px;font-weight:600;border-radius:4px}
+  .seal.bad{border-color:var(--warn);color:#e8b98d;background:rgba(178,112,58,.18)}
+  .seal svg{flex:none}
+
+  .psec{padding:22px 16px 0}
+  .psec h2{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-bottom:4px}
+  .psec .plede{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+
+  .tl{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .tstage{border-bottom:1px solid #eee8d8}
+  .tstage:last-child{border-bottom:none}
+  .tstage>button{width:100%;background:none;border:none;display:flex;align-items:center;gap:12px;
+    padding:14px 15px;cursor:pointer;text-align:left;font-size:14px}
+  .tstage>button:active{background:#faf8f0}
+  .tdot{width:12px;height:12px;border-radius:50%;border:3px solid var(--leaf);background:var(--paper);flex:none}
+  .tstage.verified .tdot{border-color:var(--gold);background:var(--gold)}
+  .tname{font-family:'Fraunces',serif;font-weight:600;font-size:15px}
+  .tby{font-size:11px;color:var(--ink-soft)}
+  .tarrow{margin-left:auto;color:var(--ink-soft);transition:transform .18s;flex:none}
+  .tstage.open .tarrow{transform:rotate(90deg)}
+  .tbody{display:none;padding:0 15px 15px 39px}
+  .tstage.open .tbody{display:block}
+  .facts{display:flex;flex-wrap:wrap;gap:6px}
+  .fact{background:var(--paper-2);border:1px solid var(--line);font-size:11.5px;padding:4px 9px;border-radius:3px}
+  .fact em{font-style:normal;color:var(--ink-soft)}
+  .corr{margin-top:8px;font-size:11.5px;color:var(--warn)}
+  .evid{margin-top:8px;font-size:11.5px}
+  .evid .tick{color:var(--ok);font-weight:600} .evid .cross{color:var(--warn);font-weight:600}
+  .evid .mono{font-size:10px;color:var(--ink-soft);word-break:break-all}
+
+  .circle-card{background:var(--green-deep);color:var(--paper);border-radius:8px;padding:22px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
+  .ring{width:150px;height:150px;position:relative}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .pct b{font-family:'Fraunces',serif;font-size:31px;font-weight:700;color:var(--gold-soft)}
+  .ring .pct span{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-2)}
+  .circle-card h3{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--gold-soft)}
+  .circle-card p{font-size:12.5px;color:var(--paper-2);max-width:40ch}
+  .outputs{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+  .out{border:1px solid rgba(217,198,144,.5);padding:5px 10px;font-size:11.5px;color:var(--gold-soft);border-radius:3px}
+  .rrows{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .rrow{display:flex;justify-content:space-between;gap:10px;padding:12px 15px;font-size:12.5px;
+    border-bottom:1px solid #eee8d8;flex-wrap:wrap}
+  .rrow:last-child{border-bottom:none}
+  .rrow .st{font-weight:600}
+  .rrow .st.ok{color:var(--ok)} .rrow .st.pending{color:var(--warn)}
+
+  .rewards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:360px){.rewards{grid-template-columns:1fr}}
+  .reward{border:1px solid var(--line);background:#fff;border-radius:8px;padding:13px}
+  .reward .amt{color:var(--gold);font-weight:700;font-size:18px;font-family:'Fraunces',serif}
+  .reward b{font-family:'Fraunces',serif;font-size:13.5px;display:block}
+  .reward .why{font-size:11px;color:var(--ink-soft);margin-top:3px}
+
+  .pfoot{margin:26px 16px 0;font-size:11.5px;color:var(--ink-soft);text-align:center;padding-bottom:8px}
+  .perr{padding:50px 24px;text-align:center;color:var(--warn);font-size:14px}
+  .spin{padding:50px 24px;text-align:center;color:var(--ink-soft);font-size:13px}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(24px + var(--sab));
+    background:var(--green-deep);color:var(--gold-soft);font-size:13px;font-weight:600;padding:12px 20px;
+    border-radius:99px;box-shadow:0 6px 18px rgba(24,32,25,.35);opacity:0;pointer-events:none;
+    transition:opacity .25s, transform .25s;z-index:70;display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="bar" id="bar">
+  <button class="backbtn" id="backBtn" aria-label="Back">‹</button>
+  <div><b>OliveChain</b><div class="tag" id="i-tag">Bottle verification</div></div>
+  <span class="dot" id="chainDot"><i></i><span id="i-chain">chain</span></span>
+  <span class="oc-langs" id="langSwitch"></span>
+</div>
+
+<main>
+  <!-- ============ HOME ============ -->
+  <div class="screen active" id="scr-home">
+    <div class="hero">
+      <h1>Check the truth behind your bottle.</h1>
+      <p>Scan the label's QR code or type its batch code — the full signed history is re-verified live.</p>
+    </div>
+
+    <div class="panel">
+      <button class="scanbtn" id="camBtn">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v7h-7"/></svg>
+        Scan bottle QR
+      </button>
+      <div class="or">or enter the code</div>
+      <div class="coderow">
+        <input id="code" type="text" placeholder="BATCH-2025-001" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="goBtn">Verify</button>
+      </div>
+      <div class="homeerr" id="homeErr"></div>
+      <div class="chipslab" id="chipsLab" hidden>No bottle at hand? Try a pilot batch:</div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="hsec">
+      <h2>Your scans</h2>
+      <div class="hist" id="hist"><div class="histempty">Bottles you verify will appear here.</div></div>
+    </div>
+
+    <div class="about">
+      <h3>What a scan really does</h3>
+      <p>Every record behind a batch is digitally signed by the organization that made it and chained
+         to the record before it. When you scan, the whole chain is re-checked on the spot — and your
+         scan is written to the ledger as a signed event of its own.</p>
+      <p>A ledger cannot taste oil: laboratories, scales and audits provide the physical truth.
+         This app makes any later alteration of their records detectable.</p>
+    </div>
+  </div>
+
+  <!-- ============ PASSPORT ============ -->
+  <div class="screen" id="scr-pass"><div class="spin">Verifying…</div></div>
+</main>
+
+<!-- scanner overlay -->
+<div class="scanov" id="scanov">
+  <div class="top"><b>Point at the bottle's QR</b><button class="close" id="scanClose">✕</button></div>
+  <video id="video" playsinline muted></video>
+  <div class="frame"><i></i></div>
+  <div class="hint" id="scanHint">Looking for a code…</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const t = OC.t;
+const tk = (prefix, key) => { const v = t(prefix + key); return v === prefix + key ? key : v; };
+const LOCALE = OC.lang === "fr" ? "fr-FR" : OC.lang === "ar" ? "ar-MA" : "en-GB";
+const api = async p => {const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);try{const r=await fetch(p,{signal:controller.signal,cache:"no-store"});let body=null;try{body=await r.json()}catch{}if(!r.ok)throw new Error(body?.detail||body?.error||`HTTP ${r.status}`);return body}catch(e){if(e.name==="AbortError")throw new Error("Verification timed out. Check that the OliveChain server and Fabric Gateway Agents are online.");throw e}finally{clearTimeout(timer)}};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => typeof n === "number" ? n.toLocaleString("en-US") : n;
+const valueText = v => {if(v===undefined||v===null)return "";if(Array.isArray(v))return v.map(valueText).join(" · ");if(typeof v==="object")return Object.entries(v).map(([k,x])=>`${k.replace(/_/g," ")}: ${valueText(x)}`).join(" · ");return String(v)};
+const dateS = ts => new Date(ts*1000).toLocaleDateString(LOCALE,{day:"numeric",month:"short",year:"numeric"});
+
+OC.mountSwitcher($("langSwitch"));
+(function applyStatic(){
+  $("i-tag").textContent = t("m.tag");
+  $("i-chain").textContent = t("m.chain");
+  document.querySelector(".hero h1").textContent = t("m.h1");
+  document.querySelector(".hero p").textContent = t("m.p");
+  const cam = $("camBtn");
+  cam.childNodes[cam.childNodes.length-1].textContent = " " + t("m.scanbtn");
+  document.querySelector(".or").textContent = t("m.or");
+  $("goBtn").textContent = t("m.verify");
+  $("chipsLab").textContent = t("m.chips");
+  document.querySelector(".hsec h2").textContent = t("m.hist.h");
+  document.querySelector(".about h3").textContent = t("m.about.h");
+  const ap = document.querySelectorAll(".about p");
+  ap[0].textContent = t("m.about.1"); ap[1].textContent = t("m.about.2");
+  document.querySelector(".scanov .top b").textContent = t("m.scan.point");
+  $("scanHint").textContent = t("m.scan.look");
+})();
+const shield = ok => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/>${ok?'<path d="M8.5 12l2.5 2.5 4.5-5"/>':'<path d="M9 9l6 6M15 9l-6 6"/>'}</svg>`;
+
+/* ---------------- navigation ---------------- */
+function show(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $("scr-"+name).classList.add("active");
+  $("bar").classList.toggle("haspass", name==="pass");
+  window.scrollTo(0,0);
+}
+function route(){
+  const m = location.hash.match(/^#\/p\/(.+)$/);
+  if(m) loadPassport(decodeURIComponent(m[1]));
+  else show("home");
+}
+window.addEventListener("hashchange", route);
+$("backBtn").addEventListener("click", ()=>{ location.hash = ""; });
+
+/* ---------------- toast ---------------- */
+let toastT;
+function toast(msg){
+  const t = $("toast");
+  t.innerHTML = shield(true) + " " + esc(msg);
+  t.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>t.classList.remove("show"), 3200);
+}
+
+/* ---------------- chain dot ---------------- */
+api("/stats").then(s=>{
+  const i = $("chainDot").querySelector("i");
+  i.className = s.chain_valid ? "ok" : "bad";
+}).catch(()=>{});
+
+/* ---------------- demo chips ---------------- */
+api("/subjects").then(({batches})=>{
+  if(!batches.length) return;
+  $("chipsLab").hidden = false;
+  $("chips").innerHTML = batches.map(b=>`<button data-b="${esc(b)}">${esc(b)}</button>`).join("");
+  $("chips").querySelectorAll("button").forEach(btn=>
+    btn.addEventListener("click", ()=>verify(btn.dataset.b)));
+}).catch(()=>{});
+
+/* ---------------- history (localStorage) ---------------- */
+const HKEY = "oc_scans";
+const getHist = () => { try{ return JSON.parse(localStorage.getItem(HKEY)) || []; }catch(_){ return []; } };
+function pushHist(id, ok){
+  const h = getHist().filter(x=>x.id!==id);
+  h.unshift({id, ok, ts: Date.now()});
+  localStorage.setItem(HKEY, JSON.stringify(h.slice(0,12)));
+  renderHist();
+}
+function renderHist(){
+  const h = getHist();
+  $("hist").innerHTML = h.length ? h.map(x=>`
+    <div class="hrow" data-b="${esc(x.id)}">
+      <span class="st ${x.ok?'ok':'bad'}">${x.ok?'✓':'✕'}</span>
+      <span><span class="hid mono">${esc(x.id)}</span><br>
+        <span class="ht">${new Date(x.ts).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</span></span>
+      <span class="go">›</span>
+    </div>`).join("")
+    : `<div class="histempty">${t("m.hist.empty")}</div>`;
+  $("hist").querySelectorAll(".hrow").forEach(r=>
+    r.addEventListener("click", ()=>{ location.hash = "#/p/"+encodeURIComponent(r.dataset.b); }));
+}
+renderHist();
+
+/* ---------------- verify flow ---------------- */
+let justScanned = false;
+async function verify(code){
+  code = (code||"").trim();
+  const err = $("homeErr");
+  err.textContent = "";
+  if(!code){ err.textContent = t("m.err.empty"); return; }
+  const btn = $("goBtn");
+  btn.disabled = true; btn.textContent = "…";
+  try{
+    await api("/passport/"+encodeURIComponent(code));
+    try{ const r = await fetch("/scan/"+encodeURIComponent(code), {method:"POST"});
+         justScanned = r.ok; }catch(_){ justScanned = false; }
+    location.hash = "#/p/"+encodeURIComponent(code);
+  }catch(e){
+    err.textContent = t("m.err.notfound");
+    pushHist(code, false);
+  }finally{
+    btn.disabled = false; btn.textContent = "Verify";
+  }
+}
+$("goBtn").addEventListener("click", ()=>verify($("code").value));
+$("code").addEventListener("keydown", e=>{ if(e.key==="Enter") verify($("code").value); });
+
+/* ---------------- QR camera scanning ---------------- */
+let stream = null, scanning = false;
+function stopScan(){
+  scanning = false;
+  $("scanov").classList.remove("active");
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+}
+$("scanClose").addEventListener("click", stopScan);
+$("camBtn").addEventListener("click", async ()=>{
+  if(!window.isSecureContext){
+    $("homeErr").textContent = t("m.err.https");
+    return;
+  }
+  if(!("BarcodeDetector" in window) || !navigator.mediaDevices?.getUserMedia){
+    $("homeErr").textContent = t("m.err.nosupport");
+    return;
+  }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+  }catch(_){
+    $("homeErr").textContent = t("m.err.cam");
+    return;
+  }
+  const video = $("video");
+  video.srcObject = stream;
+  await video.play();
+  $("scanov").classList.add("active");
+  scanning = true;
+  const detector = new BarcodeDetector({formats:["qr_code"]});
+  const tick = async ()=>{
+    if(!scanning) return;
+    try{
+      const codes = await detector.detect(video);
+      if(codes.length){
+        const raw = codes[0].rawValue || "";
+        const m = raw.match(/BATCH[-\w]+/i) ||
+                  (raw.includes("batch=") ? [new URL(raw, location.href).searchParams.get("batch")] : null);
+        if(m && m[0]){
+          $("scanHint").textContent = t("m.scan.found", {code: m[0]});
+          stopScan();
+          verify(m[0]);
+          return;
+        }
+      }
+    }catch(_){/* keep scanning */}
+    requestAnimationFrame(tick);
+  };
+  tick();
+});
+
+/* ---------------- passport rendering ---------------- */
+const FACTS = {
+  cultivation: p => [[t("p.f.cultivar"),p.cultivar],[t("p.f.plot"),p.plot_id],[t("p.f.practices"),valueText(p.practices)]],
+  harvest: p => [[t("p.f.date"),p.date],[t("p.f.quantity"),fmt(p.quantity_kg)+" kg"],[t("p.f.method"),(p.method||"").replace(/_/g," ")]],
+  collection_transport: p => [[t("p.f.weight"),fmt(p.weight_kg)+" kg"],[t("p.f.containers"),valueText(p.container_ids)]],
+  milling: p => [[t("p.f.received"),fmt(p.received_kg)+" kg"],[t("p.f.oil"),fmt(p.oil_yield_l)+" L"],[t("p.f.method"),(p.extraction_method||"").replace(/_/g," ")],[t("p.f.temp"),p.temperature_c+" °C"]],
+  lab_verification: p => [[t("p.f.class"),(p.quality_class||"").replace(/_/g," ")],[t("p.f.acidity"),p.results?.free_acidity_pct+" %"],[t("p.f.defects"),p.results?.sensory_defects]],
+  bottling: p => [[t("p.f.bottles"),fmt(p.bottle_count)],[t("p.f.filled"),p.fill_date],[t("p.f.claims"),valueText(p.label_claims)]],
+  distribution_retail: p => [[t("p.f.destination"),p.destination]],
+};
+const OUT_LABEL = k => tk("p.out.", k);
+const WHY = r => tk("p.why.", r);
+
+async function loadPassport(batch){
+  show("pass");
+  const scr = $("scr-pass");
+  scr.innerHTML = `<div class="spin">${t("m.spin")}</div>`;
+  let P;
+  try{ P = await api("/passport/"+encodeURIComponent(batch)); }
+  catch(e){
+    scr.innerHTML = `<div class="perr">${t("m.perr")}<br><b class="mono">${esc(batch)}</b><br><br>${t("m.perr2")}</div>`;
+    return;
+  }
+  try{
+  pushHist(batch, P.ledger_verified);
+  P.stages = Array.isArray(P.stages) ? P.stages : [];
+  P.circular = Array.isArray(P.circular) ? P.circular : [];
+  P.rewards = Array.isArray(P.rewards) ? P.rewards : [];
+
+  const stages = P.stages.map(s=>{
+    const facts = (FACTS[s.event_type]||(()=>[]))(s.details||{})
+      .filter(([,v])=>v!==undefined&&v!==null&&v!=="")
+      .map(([k,v])=>`<span class="fact"><em>${esc(k)}</em>&nbsp;${esc(v)}</span>`).join("");
+    const evid = (s.evidence||[]).map(e=>
+      `<div class="evid">${e.intact===false?`<span class="cross">${t("p.evid.bad")}</span>`:`<span class="tick">${t("p.evid.ok")}</span>`}
+       ${esc(e.name)}<br><span class="mono">sha256:${esc(e.sha256.slice(0,18))}…</span></div>`).join("");
+    return `
+      <div class="tstage ${s.event_type==='lab_verification'?'verified':''}">
+        <button type="button">
+          <span class="tdot"></span>
+          <span><span class="tname">${esc(tk("p.st.", s.stage))}</span><br>
+            <span class="tby">${esc(s.by)} · ${dateS(s.timestamp)} · ${t("m.signedword")}</span></span>
+          <span class="tarrow">›</span>
+        </button>
+        <div class="tbody">
+          <div class="facts">${facts}</div>
+          ${s.corrected?`<div class="corr">${t("p.corr")}</div>`:''}
+          ${evid}
+        </div>
+      </div>`;
+  }).join("");
+
+  const main = P.circular.find(c=>c.mass_balance_ok) || P.circular[0];
+  let circle = "";
+  if(main){
+    const pct = Math.max(0, Math.min(100, main.recovery_pct));
+    const C = 2*Math.PI*64;
+    const outs = Object.entries(main.recovered_outputs||{})
+      .map(([k,v])=>`<span class="out">${fmt(v)} ${esc(OUT_LABEL(k))}</span>`).join("");
+    circle = `
+      <div class="circle-card">
+        <div class="ring">
+          <svg width="150" height="150"><circle cx="75" cy="75" r="64" stroke="#3b5244" stroke-width="9" fill="none"/>
+          <circle cx="75" cy="75" r="64" stroke="#c2a24b" stroke-width="9" fill="none" stroke-linecap="round"
+            stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
+          <div class="pct"><b>${main.recovery_pct}%</b><span>${t("p.ring")}</span></div>
+        </div>
+        <div>
+          <h3>${t("m.accounted", {kg: fmt(main.generated_kg), type: esc(main.residue_type||"residue")})}</h3>
+          <p>${t("m.ringp")}</p>
+        </div>
+        <div class="outputs">${outs}</div>
+      </div>`;
+  }
+  const rrows = P.circular.map(c=>`
+    <div class="rrow">
+      <span>${fmt(c.generated_kg)} kg ${esc(c.residue_type||"")}</span>
+      <span class="st ${c.mass_balance_ok?'ok':'pending'}">${c.mass_balance_ok?t("m.rrow.ok"):t("m.rrow.wait")}</span>
+    </div>`).join("");
+
+  const agg = {};
+  P.rewards.forEach(r=>{
+    const k = r.recipient+"|"+r.for;
+    agg[k] = agg[k] ? {...agg[k], amount: agg[k].amount + r.amount} : {...r};
+  });
+  const rewards = Object.values(agg).map(r=>`
+    <div class="reward"><div class="amt">+${r.amount}</div><b>${esc(r.recipient)}</b>
+      <div class="why">${esc(WHY(r.for))}</div></div>`).join("");
+
+  scr.innerHTML = `
+    <div class="phead">
+      <span class="pid">${esc(P.batch_id)}</span>
+      <div class="seals">
+        <span class="seal ${P.ledger_verified?'':'bad'}">${shield(P.ledger_verified)}
+          ${P.ledger_verified?t("s.verified"):t("s.vfail")}</span>
+        <span class="seal">${t("m.scansword", {n: P.consumer_scans})}</span>
+      </div>
+    </div>
+    ${P.workflow_status&&!P.workflow_status.complete?`<div class="psec"><div class="corr"><b>Batch in progress:</b> ${esc(P.workflow_status.current_label||valueText(P.workflow_status.current_step))}. ${esc(P.workflow_status.message||"")}</div></div>`:""}
+    <div class="psec">
+      <h2>${t("p.journey.h")}</h2>
+      <div class="plede">${t("m.journey.lede")}</div>
+      <div class="tl">${stages}</div>
+    </div>
+    <div class="psec">
+      <h2>${t("m.byp.h")}</h2>
+      <div class="plede">${t("m.byp.lede")}</div>
+      ${circle}
+      <div class="rrows">${rrows}</div>
+    </div>
+    <div class="psec">
+      <h2>${t("m.rec.h")}</h2>
+      <div class="plede">${t("m.rec.lede")}</div>
+      <div class="rewards">${rewards}</div>
+    </div>
+    <div class="pfoot">${P.ledger_verified
+      ? t("m.footok")
+      : t("m.footwarn") + esc(P.ledger_problems.join("; "))}</div>`;
+
+  scr.querySelectorAll(".tstage > button").forEach(b=>
+    b.addEventListener("click", ()=>b.parentElement.classList.toggle("open")));
+
+  if(justScanned){ toast(t("s.myscan")); justScanned = false; }
+  }catch(e){
+    console.error("passport rendering failed",e);
+    scr.innerHTML = `<div class="perr">Unable to render this passport.<br><b class="mono">${esc(batch)}</b><br><br>${esc(e.message||String(e))}<br><br><button class="scanbtn" onclick="location.reload()">Retry</button></div>`;
+  }
+}
+
+/* ---------------- PWA ---------------- */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("/sw.js").catch(()=>{});
+}
+
+/* ---------------- boot ---------------- */
+const preB = new URLSearchParams(location.search).get("batch");
+if(preB && !location.hash) verify(preB);
+else route();
+</script>
+</body>
+</html>

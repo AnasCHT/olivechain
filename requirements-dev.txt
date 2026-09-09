@@ -1,0 +1,5 @@
+# Test-only tooling (not needed to run the server).
+pytest>=8        # unit and integration tests
+httpx>=0.27      # FastAPI/Starlette TestClient transport
+playwright>=1.40   # browser E2E of the portal signing flow (scripts/e2e_portal.py)
+pypdf>=4          # PDF text extraction (scripts/verify_pdf_passport.py)

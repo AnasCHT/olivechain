@@ -1,0 +1,1 @@
+{"index":{"fields":["docType","event_type","subject_id","timestamp"]},"ddoc":"indexEventDoc","name":"indexEventDoc","type":"json"}

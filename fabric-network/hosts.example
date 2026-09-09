@@ -1,0 +1,5 @@
+# Replace these addresses with the permanent LAN/VPN addresses of the four machines.
+192.168.11.25 machine1.olivechain.local peer0.farmer.olivechain.local orderer1.ordererorg1.olivechain.local ca.farmer.olivechain.local ca.ordererorg1.olivechain.local
+192.168.11.26 machine2.olivechain.local peer0.maker.olivechain.local orderer2.ordererorg2.olivechain.local ca.maker.olivechain.local ca.ordererorg2.olivechain.local
+192.168.11.27 machine3.olivechain.local peer0.courier.olivechain.local orderer3.ordererorg3.olivechain.local ca.courier.olivechain.local ca.ordererorg3.olivechain.local
+192.168.11.28 machine4.olivechain.local peer0.recycler.olivechain.local ca.recycler.olivechain.local

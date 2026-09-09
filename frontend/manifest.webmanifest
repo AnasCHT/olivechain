@@ -1,0 +1,15 @@
+{
+  "name": "OliveChain — Bottle Verification",
+  "short_name": "OliveChain",
+  "description": "Verify your olive oil bottle's signed history, live from the ledger.",
+  "start_url": "/m",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c2a21",
+  "theme_color": "#1c2a21",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

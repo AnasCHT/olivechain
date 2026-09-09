@@ -1,0 +1,73 @@
+version: 1
+purpose: Preserve OliveChain user-visible behavior while replacing the local ledger backend with Hyperledger Fabric.
+
+surfaces:
+  dashboard:
+    paths: ["/"]
+    requirements:
+      - current statistics remain available
+      - batch passports remain listed
+      - circular recovery remains visible
+      - EcoPoints balances remain visible
+      - ledger explorer remains searchable
+      - consortium membership remains visible
+      - live audit remains available
+
+  actor_portal:
+    paths: ["/portal"]
+    requirements:
+      - organizations can authenticate and submit authorized events
+      - role restrictions remain enforced
+      - evidence references remain attachable
+      - prepare and commit flow remains supported until a versioned replacement is introduced
+
+  consumer:
+    paths: ["/verify", "/m", "/passport-view/{batch_id}"]
+    requirements:
+      - consumers can verify a batch
+      - scans remain countable and auditable
+      - English, French and Arabic presentation remains available
+
+  documents_and_labels:
+    paths:
+      - "/passport/{batch_id}.pdf"
+      - "/passport/{batch_id}/credential"
+      - "/labels/{batch_id}"
+      - "/qr/{batch_id}.svg"
+      - "/01/{gtin}/10/{lot}"
+    requirements:
+      - signed PDF passports remain available
+      - W3C verifiable credentials remain available
+      - QR labels and GS1 Digital Links remain available
+
+  traceability_api:
+    paths:
+      - "/events/prepare"
+      - "/events/commit"
+      - "/events"
+      - "/subjects"
+      - "/passport/{batch_id}"
+      - "/residues/{residue_id}/balance"
+    requirements:
+      - event schemas and API response shapes remain backward compatible where practical
+      - full batch and residue history remains queryable
+      - corrections supersede and never erase prior records
+
+  evidence_and_governance:
+    paths:
+      - "/evidence"
+      - "/governance"
+      - "/audit"
+      - "/rewards/due"
+      - "/rewards/balances"
+    requirements:
+      - evidence stays off-chain and remains hash anchored
+      - anomaly flags and review resolutions remain available
+      - reward rules remain based on verifiable evidence and mass balance
+
+migration_rules:
+  - do not remove the local Ledger implementation until Fabric network validation is complete
+  - put Fabric behind a backend adapter rather than rewriting frontend pages
+  - enforce trust-critical validation in chaincode as well as in FastAPI
+  - keep large evidence files off-chain and store their hashes and references on-chain
+  - preserve stable identifiers for batches, residues, organizations and events

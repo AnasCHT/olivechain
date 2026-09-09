@@ -1,0 +1,4 @@
+{$OLIVECHAIN_DOMAIN:localhost} {
+	encode gzip
+	reverse_proxy olivechain:8000
+}

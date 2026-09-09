@@ -1,0 +1,48 @@
+network:
+  domain: olivechain.local
+  channel: olivechannel
+  consensus: etcdraft
+
+machines:
+  machine1:
+    business_org:
+      name: FarmerOrg
+      msp_id: FarmerOrgMSP
+      domain: farmer.olivechain.local
+      peer: peer0.farmer.olivechain.local
+    ordering_org:
+      name: OrdererOrg1
+      msp_id: OrdererOrg1MSP
+      domain: ordererorg1.olivechain.local
+      orderer: orderer1.ordererorg1.olivechain.local
+
+  machine2:
+    business_org:
+      name: MakerOrg
+      msp_id: MakerOrgMSP
+      domain: maker.olivechain.local
+      peer: peer0.maker.olivechain.local
+    ordering_org:
+      name: OrdererOrg2
+      msp_id: OrdererOrg2MSP
+      domain: ordererorg2.olivechain.local
+      orderer: orderer2.ordererorg2.olivechain.local
+
+  machine3:
+    business_org:
+      name: CourierOrg
+      msp_id: CourierOrgMSP
+      domain: courier.olivechain.local
+      peer: peer0.courier.olivechain.local
+    ordering_org:
+      name: OrdererOrg3
+      msp_id: OrdererOrg3MSP
+      domain: ordererorg3.olivechain.local
+      orderer: orderer3.ordererorg3.olivechain.local
+
+  machine4:
+    business_org:
+      name: RecyclerOrg
+      msp_id: RecyclerOrgMSP
+      domain: recycler.olivechain.local
+      peer: peer0.recycler.olivechain.local

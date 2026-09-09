@@ -1,0 +1,126 @@
+name: olivechain-machine3
+
+services:
+  couchdb:
+    image: couchdb:${COUCHDB_VERSION}
+    container_name: couchdb.courier.olivechain.local
+    hostname: couchdb.courier.olivechain.local
+    restart: unless-stopped
+    environment:
+      COUCHDB_USER: ${COUCHDB_USER}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD}
+    volumes:
+      - ../../runtime/machine3/production/couchdb:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5984/_up"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - olivechain
+
+  peer:
+    image: hyperledger/fabric-peer:${FABRIC_VERSION}
+    container_name: peer0.courier.olivechain.local
+    hostname: peer0.courier.olivechain.local
+    restart: unless-stopped
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    environment:
+      FABRIC_LOGGING_SPEC: INFO
+      CORE_PEER_ID: peer0.courier.olivechain.local
+      CORE_PEER_ADDRESS: peer0.courier.olivechain.local:7051
+      CORE_PEER_LISTENADDRESS: 0.0.0.0:7051
+      CORE_PEER_CHAINCODEADDRESS: peer0.courier.olivechain.local:7052
+      CORE_PEER_CHAINCODELISTENADDRESS: 0.0.0.0:7052
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: peer0.courier.olivechain.local:7051
+      # One peer per organization: this peer receives blocks directly from the ordering service.
+      CORE_PEER_GOSSIP_USELEADERELECTION: "false"
+      CORE_PEER_GOSSIP_ORGLEADER: "true"
+      CORE_PEER_GOSSIP_STATE_ENABLED: "false"
+      CORE_PEER_DELIVERYCLIENT_BLOCKGOSSIPENABLED: "false"
+      CORE_PEER_LOCALMSPID: CourierOrgMSP
+      CORE_PEER_MSPCONFIGPATH: /etc/hyperledger/fabric/msp
+      CORE_PEER_TLS_ENABLED: "true"
+      CORE_PEER_TLS_CERT_FILE: /etc/hyperledger/fabric/tls/server.crt
+      CORE_PEER_TLS_KEY_FILE: /etc/hyperledger/fabric/tls/server.key
+      CORE_PEER_TLS_ROOTCERT_FILE: /etc/hyperledger/fabric/tls/ca.crt
+      CORE_LEDGER_STATE_STATEDATABASE: CouchDB
+      CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS: couchdb:5984
+      CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME: ${COUCHDB_USER}
+      CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD: ${COUCHDB_PASSWORD}
+      CORE_OPERATIONS_LISTENADDRESS: 0.0.0.0:9443
+      CORE_METRICS_PROVIDER: prometheus
+      CORE_PEER_PROFILE_ENABLED: "false"
+    ports:
+      - "7051:7051"
+      - "127.0.0.1:9443:9443"
+    volumes:
+      - ../../runtime/machine3/crypto/peerOrganizations/courier.olivechain.local/peers/peer0.courier.olivechain.local/msp:/etc/hyperledger/fabric/msp:ro
+      - ../../runtime/machine3/crypto/peerOrganizations/courier.olivechain.local/peers/peer0.courier.olivechain.local/tls:/etc/hyperledger/fabric/tls:ro
+      - ../../runtime/machine3/production/peer:/var/hyperledger/production
+    extra_hosts:
+      - "peer0.farmer.olivechain.local:${M1_IP}"
+      - "orderer1.ordererorg1.olivechain.local:${M1_IP}"
+      - "peer0.maker.olivechain.local:${M2_IP}"
+      - "orderer2.ordererorg2.olivechain.local:${M2_IP}"
+      - "peer0.recycler.olivechain.local:${M4_IP}"
+    networks:
+      olivechain:
+        aliases:
+          - peer0.courier.olivechain.local
+
+  orderer:
+    image: hyperledger/fabric-orderer:${FABRIC_VERSION}
+    container_name: orderer3.ordererorg3.olivechain.local
+    hostname: orderer3.ordererorg3.olivechain.local
+    restart: unless-stopped
+    environment:
+      FABRIC_LOGGING_SPEC: INFO
+      ORDERER_GENERAL_LISTENADDRESS: 0.0.0.0
+      ORDERER_GENERAL_LISTENPORT: 7050
+      ORDERER_GENERAL_LOCALMSPID: OrdererOrg3MSP
+      ORDERER_GENERAL_LOCALMSPDIR: /var/hyperledger/orderer/msp
+      ORDERER_GENERAL_BOOTSTRAPMETHOD: none
+      ORDERER_CHANNELPARTICIPATION_ENABLED: "true"
+      ORDERER_GENERAL_TLS_ENABLED: "true"
+      ORDERER_GENERAL_TLS_PRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_GENERAL_TLS_CERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_GENERAL_TLS_ROOTCAS: '[/var/hyperledger/orderer/tls/ca.crt]'
+      ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_GENERAL_CLUSTER_ROOTCAS: '[/var/hyperledger/consortium/ordererorg1/tlsca.pem,/var/hyperledger/consortium/ordererorg2/tlsca.pem,/var/hyperledger/consortium/ordererorg3/tlsca.pem]'
+      ORDERER_ADMIN_LISTENADDRESS: 0.0.0.0:7053
+      ORDERER_ADMIN_TLS_ENABLED: "true"
+      ORDERER_ADMIN_TLS_CERTIFICATE: /var/hyperledger/orderer/tls/server.crt
+      ORDERER_ADMIN_TLS_PRIVATEKEY: /var/hyperledger/orderer/tls/server.key
+      ORDERER_ADMIN_TLS_CLIENTROOTCAS: '[/var/hyperledger/orderer/tls/ca.crt]'
+      ORDERER_OPERATIONS_LISTENADDRESS: 0.0.0.0:9444
+      ORDERER_METRICS_PROVIDER: prometheus
+      ORDERER_FILELEDGER_LOCATION: /var/hyperledger/production/orderer
+      ORDERER_CONSENSUS_WALDIR: /var/hyperledger/production/orderer/etcdraft/wal
+      ORDERER_CONSENSUS_SNAPDIR: /var/hyperledger/production/orderer/etcdraft/snapshot
+    ports:
+      - "7050:7050"
+      - "127.0.0.1:7053:7053"
+      - "127.0.0.1:9444:9444"
+    volumes:
+      - ../../runtime/machine3/crypto/ordererOrganizations/ordererorg3.olivechain.local/orderers/orderer3.ordererorg3.olivechain.local/msp:/var/hyperledger/orderer/msp:ro
+      - ../../runtime/machine3/crypto/ordererOrganizations/ordererorg3.olivechain.local/orderers/orderer3.ordererorg3.olivechain.local/tls:/var/hyperledger/orderer/tls:ro
+      - ../../public-artifacts/current:/var/hyperledger/consortium:ro
+      - ../../runtime/machine3/production/orderer:/var/hyperledger/production/orderer
+    extra_hosts:
+      - "peer0.farmer.olivechain.local:${M1_IP}"
+      - "orderer1.ordererorg1.olivechain.local:${M1_IP}"
+      - "peer0.maker.olivechain.local:${M2_IP}"
+      - "orderer2.ordererorg2.olivechain.local:${M2_IP}"
+      - "peer0.recycler.olivechain.local:${M4_IP}"
+    networks:
+      olivechain:
+        aliases:
+          - orderer3.ordererorg3.olivechain.local
+
+networks:
+  olivechain:
+    name: olivechain-machine3

@@ -1,0 +1,8 @@
+# Example LAN TLS termination for the browser wallet.
+# Add olivechain.test -> Machine 1 IP in the client hosts/DNS configuration.
+# Client devices must trust Caddy's local CA when using `tls internal`.
+olivechain.test {
+    tls internal
+    encode gzip
+    reverse_proxy 127.0.0.1:8000
+}

@@ -1,0 +1,240 @@
+---
+Organizations:
+  - &OrdererOrg1
+    Name: OrdererOrg1
+    ID: OrdererOrg1MSP
+    MSPDir: ../public-artifacts/current/ordererorg1/msp
+    OrdererEndpoints:
+      - orderer1.ordererorg1.olivechain.local:7050
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererOrg1MSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererOrg1MSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererOrg1MSP.admin')"
+
+  - &OrdererOrg2
+    Name: OrdererOrg2
+    ID: OrdererOrg2MSP
+    MSPDir: ../public-artifacts/current/ordererorg2/msp
+    OrdererEndpoints:
+      - orderer2.ordererorg2.olivechain.local:7050
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererOrg2MSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererOrg2MSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererOrg2MSP.admin')"
+
+  - &OrdererOrg3
+    Name: OrdererOrg3
+    ID: OrdererOrg3MSP
+    MSPDir: ../public-artifacts/current/ordererorg3/msp
+    OrdererEndpoints:
+      - orderer3.ordererorg3.olivechain.local:7050
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererOrg3MSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererOrg3MSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererOrg3MSP.admin')"
+
+  - &FarmerOrg
+    Name: FarmerOrg
+    ID: FarmerOrgMSP
+    MSPDir: ../public-artifacts/current/farmer/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('FarmerOrgMSP.admin', 'FarmerOrgMSP.peer', 'FarmerOrgMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('FarmerOrgMSP.admin', 'FarmerOrgMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('FarmerOrgMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('FarmerOrgMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.farmer.olivechain.local
+        Port: 7051
+
+  - &MakerOrg
+    Name: MakerOrg
+    ID: MakerOrgMSP
+    MSPDir: ../public-artifacts/current/maker/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('MakerOrgMSP.admin', 'MakerOrgMSP.peer', 'MakerOrgMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('MakerOrgMSP.admin', 'MakerOrgMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('MakerOrgMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('MakerOrgMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.maker.olivechain.local
+        Port: 7051
+
+  - &CourierOrg
+    Name: CourierOrg
+    ID: CourierOrgMSP
+    MSPDir: ../public-artifacts/current/courier/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('CourierOrgMSP.admin', 'CourierOrgMSP.peer', 'CourierOrgMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('CourierOrgMSP.admin', 'CourierOrgMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('CourierOrgMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('CourierOrgMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.courier.olivechain.local
+        Port: 7051
+
+  - &RecyclerOrg
+    Name: RecyclerOrg
+    ID: RecyclerOrgMSP
+    MSPDir: ../public-artifacts/current/recycler/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('RecyclerOrgMSP.admin', 'RecyclerOrgMSP.peer', 'RecyclerOrgMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('RecyclerOrgMSP.admin', 'RecyclerOrgMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('RecyclerOrgMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('RecyclerOrgMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.recycler.olivechain.local
+        Port: 7051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  EtcdRaft:
+    Consenters:
+      - Host: orderer1.ordererorg1.olivechain.local
+        Port: 7050
+        ClientTLSCert: ../public-artifacts/current/ordererorg1/orderer-tls-server.crt
+        ServerTLSCert: ../public-artifacts/current/ordererorg1/orderer-tls-server.crt
+      - Host: orderer2.ordererorg2.olivechain.local
+        Port: 7050
+        ClientTLSCert: ../public-artifacts/current/ordererorg2/orderer-tls-server.crt
+        ServerTLSCert: ../public-artifacts/current/ordererorg2/orderer-tls-server.crt
+      - Host: orderer3.ordererorg3.olivechain.local
+        Port: 7050
+        ClientTLSCert: ../public-artifacts/current/ordererorg3/orderer-tls-server.crt
+        ServerTLSCert: ../public-artifacts/current/ordererorg3/orderer-tls-server.crt
+    Options:
+      TickInterval: 500ms
+      ElectionTick: 10
+      HeartbeatTick: 1
+      MaxInflightBlocks: 5
+      SnapshotIntervalSize: 16777216
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 100
+    AbsoluteMaxBytes: 10 MB
+    PreferredMaxBytes: 2 MB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  OliveChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg1
+        - *OrdererOrg2
+        - *OrdererOrg3
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *FarmerOrg
+        - *MakerOrg
+        - *CourierOrg
+        - *RecyclerOrg

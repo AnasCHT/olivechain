@@ -1,0 +1,42 @@
+name: olivechain-machine2-ca
+
+services:
+  ca_peer:
+    image: hyperledger/fabric-ca:${FABRIC_CA_VERSION}
+    container_name: ca.maker.olivechain.local
+    hostname: ca.maker.olivechain.local
+    restart: unless-stopped
+    environment:
+      FABRIC_CA_HOME: /etc/hyperledger/fabric-ca-server
+      FABRIC_CA_SERVER_CA_NAME: ca-maker
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_HOSTS: ca.maker.olivechain.local,${MACHINE_FQDN},localhost,${MACHINE_IP}
+    command: sh -c 'fabric-ca-server start -b admin:${CA_ADMIN_PASSWORD} -d'
+    ports:
+      - "127.0.0.1:7054:7054"
+    volumes:
+      - ../../runtime/machine2/ca/maker:/etc/hyperledger/fabric-ca-server
+    networks:
+      - olivechain
+
+  ca_orderer:
+    image: hyperledger/fabric-ca:${FABRIC_CA_VERSION}
+    container_name: ca.ordererorg2.olivechain.local
+    hostname: ca.ordererorg2.olivechain.local
+    restart: unless-stopped
+    environment:
+      FABRIC_CA_HOME: /etc/hyperledger/fabric-ca-server
+      FABRIC_CA_SERVER_CA_NAME: ca-ordererorg2
+      FABRIC_CA_SERVER_TLS_ENABLED: "true"
+      FABRIC_CA_SERVER_CSR_HOSTS: ca.ordererorg2.olivechain.local,${MACHINE_FQDN},localhost,${MACHINE_IP}
+    command: sh -c 'fabric-ca-server start -b admin:${ORDERER_CA_ADMIN_PASSWORD} -d'
+    ports:
+      - "127.0.0.1:8054:7054"
+    volumes:
+      - ../../runtime/machine2/ca/ordererorg2:/etc/hyperledger/fabric-ca-server
+    networks:
+      - olivechain
+
+networks:
+  olivechain:
+    name: olivechain-machine2

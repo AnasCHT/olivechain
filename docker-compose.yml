@@ -1,0 +1,39 @@
+services:
+  olivechain:
+    build: .
+    restart: unless-stopped
+    environment:
+      # set to require an invite code for organization onboarding
+      - OLIVECHAIN_ONBOARD_CODE=${OLIVECHAIN_ONBOARD_CODE:-}
+      # set BOTH to require HTTP Basic auth on operator surfaces
+      # (dashboard, portal, governance, /admin/*); consumer apps stay public
+      - OLIVECHAIN_ADMIN_USER=${OLIVECHAIN_ADMIN_USER:-}
+      - OLIVECHAIN_ADMIN_PASSWORD=${OLIVECHAIN_ADMIN_PASSWORD:-}
+    volumes:
+      - oc-data:/app/data
+      - oc-evidence:/app/evidence_store
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # set to your real domain for automatic Let's Encrypt certificates;
+      # defaults to localhost with a locally-trusted certificate
+      - OLIVECHAIN_DOMAIN=${OLIVECHAIN_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - olivechain
+
+volumes:
+  oc-data:
+  oc-evidence:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,11 @@
+data/
+evidence_store/
+backups/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.git/
+*.log
+tests/
+docker-compose.yml
+Caddyfile
